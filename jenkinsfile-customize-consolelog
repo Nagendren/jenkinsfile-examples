@@ -1,0 +1,46 @@
+/*This file helps you to customize your jenkins console log and email the same */
+pipeline {
+    agent {
+    label 'master'
+  }
+    parameters {
+        string(description: 'enter your branch name', name: 'branchname')
+        /* If you want choice parameter use the below example
+        choice(choices: ['test1', 'test2'], description: 'Enter your description', name: 'parametername') */
+    }
+  stages {
+      stage('Cleaning WorkSpace') {
+      steps {
+        cleanWs()
+      }
+    }
+    stage('Clone sources') {
+        steps {
+        git branch: '${params.productName}', credentialsId: 'XXXXXX', url: 'ssh://xxxxxx.xxxx/xxxxxx/xxxxxx.git'
+        }
+    }
+    
+    stage('your stage') {
+        /* your code ...
+        ......
+         ...... */
+    }
+    stage('Copy log file') {
+      steps {
+        sh """cp /var/lib/jenkins/jobs/$JOB_NAME/builds/$BUILD_ID/log output.txt
+               cat output.txt | sed -e '1,64d' > new-output.txt"""
+      }
+    }
+  }
+ post {
+        success {
+            script {
+                def joblog = readFile('joblog.txt')
+          emailext attachLog: false, body: joblog , mimeType: 'text/plain', subject: "Jenkins Build: ${currentBuild.currentResult} Job: ${currentBuild.fullDisplayName}'", to: 'xxxxxx.xxxxx@gmail.com'
+            }
+        }
+        failure {
+            emailext attachLog: true, body: "Please find the attached log for your reference", mimeType: 'text/html', subject: "Jenkins Build: ${currentBuild.currentResult} Job: ${currentBuild.fullDisplayName}' ", to: 'xxxxx.xxxxx@gmail.com'
+        }
+    }
+}
