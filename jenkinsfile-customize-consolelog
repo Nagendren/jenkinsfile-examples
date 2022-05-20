@@ -16,7 +16,7 @@ pipeline {
     }
     stage('Clone sources') {
         steps {
-        git branch: '${params.productName}', credentialsId: 'XXXXXX', url: 'ssh://xxxxxx.xxxx/xxxxxx/xxxxxx.git'
+        git branch: '${params.branchname}', credentialsId: 'XXXXXX', url: 'ssh://xxxxxx.xxxx/xxxxxx/xxxxxx.git'
         }
     }
     
@@ -27,15 +27,16 @@ pipeline {
     }
     stage('Copy log file') {
       steps {
+      /* will copy the log file and remove the first 65 lines. changes the numbers as per your requirement */
         sh """cp /var/lib/jenkins/jobs/$JOB_NAME/builds/$BUILD_ID/log output.txt
-               cat output.txt | sed -e '1,64d' > new-output.txt"""
+               cat output.txt | sed -e '1,65d' > new-output.txt"""
       }
     }
   }
  post {
         success {
             script {
-                def joblog = readFile('joblog.txt')
+                def joblog = readFile('new-output.txt')
           emailext attachLog: false, body: joblog , mimeType: 'text/plain', subject: "Jenkins Build: ${currentBuild.currentResult} Job: ${currentBuild.fullDisplayName}'", to: 'xxxxxx.xxxxx@gmail.com'
             }
         }
